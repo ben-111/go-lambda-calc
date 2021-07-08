@@ -1,0 +1,87 @@
+In lambda calculus, there are three types of terms:
+
+    1. Variable - a character or string representing a value (x)
+    2. Abstraction - function definition with parameters and an output (\x.M), the variable (x) becomes bound in the expression (M)
+    3. Application - Applying a function to an argument (M N)
+
+There are two types of reduction you can apply to an expression:
+
+    1. alpha-conversion - converting the bound variables in the expression to avoid name collisions (\x.M[x] -> \y.M[y])
+    2. beta-reduction - replacing the bound variables with the argument expression in the body of an abstraction ((\x.M)E -> M[x := E])
+
+
+Free and Bound variables:
+
+In an abstraction, you have your parameter, which is a variable, and an output that is a lambda expression.
+Variables in the output which are not bound by their own inner abstractions, and have the same name as the parameter,
+are bound to the abstraction.
+
+The rest are free variables.
+the formal definition is as such:
+The free variables of a lambda expression are either a free variable of a variable, abstraction or application.
+1. The free variables of x are just x.
+2. The free variables of λx.M are the set of free variables of M, with x removed.
+3. The free variables of (M N) is the union of the free variables of M and N.
+
+Examples:
+λx.x - x is bound to the abstraction, meaning there are no free variables.
+λx.(x y) - x is bound to the abstraction, but y is not. Therefore, y is a free variable in the abstraction.
+λx.(λy.λx.(x y) x) - There are no free variables, because y is bound to its own abstraction.
+
+
+Alpha-Conversion:
+
+Alpha-Conversion is the process of renaming the parameter of an abstraction and all of its bound variables, 
+such that all the free variables remain free after the conversion (no renaming to one of the free variables' name).
+Therefore, when Alpha-Converting, always choose a fresh name; that is, one that is not present in the body of the
+abstraction.
+Expressions that are Alpha-Converted are logically identical.
+
+
+The substitution based model of evaluation:
+
+The evaluation of lambda expressions is made by applying arguments to abstracts, which involves
+substituting all the abstract's bound variables with the argument.
+Let's define the substitution function `Subst`, which receives the argument, the bound variabls' name
+and the abstract's body: Subst(a, p, b). This function will replace all free instances of p in b, with a.
+
+There are 3 cases for this substitution:
+1. b is a variable.
+    1a. if p == b, then the output is a.
+    1b. if p != b, then the output is b - unchanged.
+2. b is an abstraction.
+    2a. if p == b.Param, then the output is b.
+    2b. if p != b.Param and b.Param is not a free variable in a, then 
+    the output is Abstract{Param: b.Param, Output: Subst(a, p, b.Output)}.
+    2c. if p != b.Param and b.Param is a free variable in a, then b should be Alpha-Converted
+    while avoiding the free variables in a as well, and then the output is 
+    Abstract{Param: b.Param, Output: Subst(a, p, b.Output)}.
+3. b is an application.
+    3a. The output is Application{Function: Subst(a, p, b.Function), Argument: Subst(a, p, b.Argument)}
+
+
+Beta-Reduction:
+
+Beta-Reduction is the rule for evaluating a lambda application. The lambda expressions that the rule
+can be applied to is called a Beta-Redex (Reduction Expression).
+A Beta-Redex is defined as an application in which the first term is a function abstraction.
+For example: (λx.M N)
+
+To evaluate a Beta-Redex, you perform the following substitution: Subst(N, x, M).
+Another way to write that is like this: M[x := N].
+
+
+Reduction strategies:
+
+A lambda expression might not be a Beta-redex, but still contain a Beta-Redex.
+Consider this expression: λx.(λy.(x y) z).
+
+Therefore, this exression can be evaluated with Beta-Reduction, even though it is not a Beta-Redex.
+If an expression cannot be reduced further, it is of Beta-Normal form.
+
+Since there can be multiple Beta-Redexes in a lambda expression, we need to have a reduction strategy - 
+that is, a way to determiine the order where we will Beta-Reduce the Beta-Redexes.
+
+There are two main reduction strategies to consider: Applicative Order strategy and Normal Order strategy.
+Applicative Order says to evaluate the inner-most expressions first.
+Normal Order says to evaluate the outer-most expressions first.
